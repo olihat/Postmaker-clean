@@ -5,7 +5,8 @@ import { getAuth, GoogleAuthProvider, OAuthProvider, FacebookAuthProvider, signI
 // ==========================================
 // 1. ZMIENNE ŚRODOWISKOWE I API
 // ==========================================
-const apiKey = ""; // Klucz API dla Gemini
+// KROK DLA WŁASNEGO HOSTINGU: Wklej swój klucz API z Google poniżej między cudzysłowami:
+const apiKey = AIzaSyCtGdmaALItm_hq49AWr8J06jsnk6O-Rug
 
 let auth = null;
 try {
@@ -597,7 +598,9 @@ async function fetchGeminiText(systemPrompt, userPrompt) {
   const payload = { contents: [{ parts: [{ text: userPrompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { responseMimeType: "application/json" } };
   const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   if (!response.ok) {
-    if (response.status === 403 || response.status === 400) throw new Error('API_KEY_ERROR');
+    const errorData = await response.text();
+    console.error("Błąd API Gemini:", response.status, errorData);
+    if (response.status === 403 || response.status === 400) throw new Error('API_KEY_ERROR: Sprawdź klucz API w Vercelu');
     throw new Error(`Błąd API Gemini: ${response.status}`);
   }
   const result = await response.json();
@@ -642,10 +645,9 @@ Odpowiadasz TYLKO w formacie JSON: { "platforms": { "<nazwa_platformy>": { "vari
     const result = await fetchGeminiText(systemPrompt, userPrompt);
     return result;
   } catch (error) {
-    const mockVariants = [ { label: "Wariant A", title: "Propozycja posta (Demo)", content: `To jest wersja demonstracyjna dla tematu: "${brief.mainTopic}".\n\nSztuczna Inteligencja napotkała problem z kluczem API, więc wygenerowaliśmy ten tekst zastępczy.\n\nDzięki temu możesz w pełni przetestować interfejs: sprawdź, jak działa edycja, wygeneruj zastępczy obrazek i zaplanuj ten post w kalendarzu lub zapisz jako wersję roboczą!`, cta: ["Sprawdź to!"], imagePrompts: ["professional minimalist vector illustration, aesthetic colors"] } ];
-    const result = { platforms: {} };
-    activePlatforms.forEach(p => { result.platforms[p] = { variants: mockVariants }; });
-    return new Promise(resolve => setTimeout(() => resolve(result), 1500)); 
+    console.error("Szczegóły błędu AI podczas generowania:", error);
+    // Zwracamy rzeczywisty błąd na ekran, zamiast "wersji demonstracyjnej"
+    throw new Error("Wystąpił problem z połączeniem z AI: " + error.message); 
   }
 }
 
